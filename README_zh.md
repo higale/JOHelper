@@ -1,9 +1,7 @@
 ﻿# TJSONObject类助手
 - v1.0.10
 - 2024-08-19  by gale
-- ++https://github.com/higale/JOHelper++
-
----
+- https://github.com/higale/JOHelper
 
 ## 示例:
     var
@@ -12,7 +10,7 @@
     begin
       jo := TJO.Create;
       try
-        jo['title'] := '🍎eng🍎中文🍎'; // 或 jo.S['title'] := '🍎eng🍎中文🍎';
+        jo['title'] := 'hello world';   // 或 jo.S['title'] := 'hello world';
         jo['a.arr[3].b'] := 0.3;        // 或 jo.F['a.arr[3].b'] := 0.3;
         jo['good'] := False;            // 或 jo.B['good'] := False;
         f := jo['a.arr[3].b'];          // 或 f := jo.F['a.arr[3].b'];
@@ -22,8 +20,6 @@
         jo.free;
       end;
     end;
-
----
 
 ## 方法和属性：
 - V[path]   - 缺省属性，获取或设置Json数据，支持常用数据类型
@@ -47,10 +43,8 @@
 - class FromString 从字符串创建实例
 - class FromFile   从文件创建实例
 
----
-
 ## 注意:
   V[path]返回一个TJSONAuto类型的数据，如果为空，且使用ToJO(True) 或 ToJA(True) 方法时，
   会自动创建相应实例，这时，和直接使用FO[path]或FA[path]是等效的
 
----
+

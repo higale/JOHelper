@@ -1,7 +1,7 @@
 ﻿# System.JSON.TJSONObject class helper
 - v1.0.10
 - 2024-08-19  by gale
-- ++https://github.com/higale/JOHelper++
+- https://github.com/higale/JOHelper
 
 ## Example:
     var
