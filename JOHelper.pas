@@ -1,22 +1,30 @@
 ﻿{
 # System.JSON.TJSONObject class helper
-- v1.0.10
-- 2024-08-19  by gale
-- ++https://github.com/higale/JOHelper++
+- v1.0.11
+- 2024-08-27  by gale
+- https://github.com/higale/JOHelper
 
 ## Example:
     var
       jo: TJO; // or TJSONObject
-      f: Extended;
+      fTemp: Extended;
     begin
       jo := TJO.Create;
       try
         jo['title'] := 'hello world'; // or jo.S['title'] := 'hello world';
-        jo['a.arr[3].b'] := 0.3;      // or jo.F['a.arr[3].b'] := 0.3;
+        jo['a.b[3].c'] := 0.3;        // or jo.F['a.arr[3].b'] := 0.3;
         jo['good'] := False;          // or jo.B['good'] := False;
-        f := jo['a.arr[3].b'];        // or f := jo.F['a.arr[3].b'];
         Memo1.Text := jo.Format;
-        Memo1.Lines.Add(f.ToString)
+
+        fTemp := jo['a.b[3].c'];
+        Memo1.Lines.Add(fTemp.ToString);
+
+        fTemp := jo['a1'];
+        Memo1.Lines.Add(fTemp.ToString);
+
+        Memo1.Lines.Add(jo['a2'].ToFloat(-1).ToString);
+        Memo1.Lines.Add(jo['a3'].ToStr('a3 not exist'));
+        jo.SaveToFile('test.json');
       finally
         jo.free;
       end;
@@ -33,21 +41,32 @@
 - FA[path]  - JSONArray, automatically created when fetching fails
 - JO[path]  - JSONObject, returns nil when fetching fails
 - FO[path]  - JSONObject, automatically created when fetching fails
-  
+
 *Fetch failure: Non-existent or type mismatch is defined as fetch failure*
-  
+
 - Clear          - Clear data
 - LoadFromString - Load data from string
 - LoadFromFile   - Load data from file
 - SaveToFile     - Save to file
 
 class Methods
-- class FromString - Create instance from string
-- class FromFile   - Create instance from file
-  
-## Note:
-  The V[path] returns a data of type TJSONAuto. If it is empty and the ToJO(True) or ToJA(True) method is used,
-  the corresponding instance will be automatically created. At this time, it is equivalent to directly using FO[path] or FA[path]
+- FromString - Create instance from string
+- FromFile   - Create instance from file
+
+## TAutoJSONValue
+JO[path](or JO.V[path]) return a data of type TAutoJSONValue. Call the following method
+to change the default value returned when Fetch failure:
+- ToStr   - Convert to string, default is ''
+- ToInt   - Convert to integer, default is 0
+- ToInt64 - Convert to int64, default is 0
+- ToFloat - Convert to float(Extended), default is 0.0
+- ToBool  - Convert to boolean, default is false
+- ToJA    - Convert to TJSONArray, default is nil
+- ToJO    - Convert to TJSONObject, default is nil
+
+If it is empty and the ToJO(True) or ToJA(True) method is called, the corresponding
+instance will be automatically created. At this time, it is equivalent to directly
+using FO[path] or FA[path]
 }
 unit JOHelper;
 
@@ -74,32 +93,25 @@ type
     property Path: string read FPath;
   public
     function Clear: TAutoJSONValue;
-    { string }
     function ToStr(const ADefault: string = ''): string;
     class operator Implicit(const Value: string): TAutoJSONValue;
     class operator Implicit(const Value: TAutoJSONValue): string;
-    { Integer }
     function ToInt(ADefault: Integer = 0): Integer;
     class operator Implicit(Value: Integer): TAutoJSONValue;
     class operator Implicit(const Value: TAutoJSONValue): Integer;
-    { Int64 }
     function ToInt64(ADefault: Int64 = 0): Int64;
     class operator Implicit(Value: Int64): TAutoJSONValue;
     class operator Implicit(const Value: TAutoJSONValue): Int64;
-    { Float }
     function ToFloat(ADefault: Extended = 0.0): Extended;
     class operator Implicit(Value: Extended): TAutoJSONValue;
     class operator Implicit(const Value: TAutoJSONValue): Extended;
-    { Boolean }
     function ToBool(ADefault: Boolean = False): Boolean;
     class operator Implicit(Value: Boolean): TAutoJSONValue;
     class operator Implicit(const Value: TAutoJSONValue): Boolean;
-    { TJSONArray }
     /// <summary>to JSONObject value, if failed and AAutoCreate is true, Create a new TJSONArray Instance to owner</summary>
     function ToJA(AAutoCreate: Boolean = False): TJSONArray;
     class operator Implicit(const Value: TJSONArray): TAutoJSONValue;
     class operator Implicit(const Value: TAutoJSONValue): TJSONArray;
-    { TJSONObject }
     /// <summary>to JSONObject value, if failed and AAutoCreate is true, Create a new JSONObject Instance to owner</summary>
     function ToJO(AAutoCreate: Boolean = False): TJSONObject;
     class operator Implicit(const Value: TJSONObject): TAutoJSONValue;
@@ -114,49 +126,55 @@ type
     procedure SetValue(const APath: string; const AValue: TJSONValue);
     function GetV(const APath: string): TAutoJSONValue;
     procedure SetV(const APath: string; const AValue: TAutoJSONValue);
-    function GetS(APath: string): string;
-    procedure SetS(APath: string; AValue: string);
-    function GetI(APath: string): Integer;
-    procedure SetI(APath: string; AValue: Integer);
-    function GetI64(APath: string): Int64;
-    procedure SetI64(APath: string; AValue: Int64);
-    function GetF(APath: string): Extended;
-    procedure SetF(APath: string; AValue: Extended);
-    function GetB(APath: string): Boolean;
-    procedure SetB(APath: string; AValue: Boolean);
-    function GetJA(APath: string): TJSONArray;
-    procedure SetJA(APath: string; AValue: TJSONArray);
-    function GetJO(APath: string): TJSONObject;
-    procedure SetJO(APath: string; AValue: TJSONObject);
-    function ForceObject(APath: string): TJSONObject;
-    function ForceArray(APath: string): TJSONArray;
+    function GetS(const APath: string): string;
+    procedure SetS(const APath: string; const AValue: string);
+    function GetI(const APath: string): Integer;
+    procedure SetI(const APath: string; AValue: Integer);
+    function GetI64(const APath: string): Int64;
+    procedure SetI64(const APath: string; AValue: Int64);
+    function GetF(const APath: string): Extended;
+    procedure SetF(const APath: string; AValue: Extended);
+    function GetB(const APath: string): Boolean;
+    procedure SetB(const APath: string; AValue: Boolean);
+    function GetJA(const APath: string): TJSONArray;
+    procedure SetJA(const APath: string; const AValue: TJSONArray);
+    function GetJO(const APath: string): TJSONObject;
+    procedure SetJO(const APath: string; const AValue: TJSONObject);
+    function ForceObject(const APath: string): TJSONObject;
+    function ForceArray(const APath: string): TJSONArray;
   public
     /// <summary> auto value, return default value of TJSONAuto if it does not exist </summary>
     property V[const APath: string]: TAutoJSONValue read GetV write SetV; default;
     /// <summary> string, return '' if it does not exist </summary>
-    property S[APath: string]: string read GetS write SetS;
+    property S[const APath: string]: string read GetS write SetS;
     /// <summary> Integer, return 0 if it does not exist </summary>
-    property I[APath: string]: Integer read GetI write SetI;
+    property I[const APath: string]: Integer read GetI write SetI;
     /// <summary> Int64, return 0 if it does not exist </summary>
-    property I64[APath: string]: Int64 read GetI64 write SetI64;
+    property I64[const APath: string]: Int64 read GetI64 write SetI64;
     /// <summary> Float(Extended), return 0.0 if it does not exist </summary>
-    property F[APath: string]: Extended read GetF write SetF;
+    property F[const APath: string]: Extended read GetF write SetF;
     /// <summary> Boolean, return false if it does not exist </summary>
-    property B[APath: string]: Boolean read GetB write SetB;
+    property B[const APath: string]: Boolean read GetB write SetB;
     /// <summary> Array, return nil if it does not exist </summary>
-    property JA[APath: string]: TJSONArray read GetJA write SetJA;
+    property JA[const APath: string]: TJSONArray read GetJA write SetJA;
     /// <summary> Array, auto create if it does not exist </summary>
-    property FA[APath: string]: TJSONArray read ForceArray;
+    property FA[const APath: string]: TJSONArray read ForceArray;
     /// <summary> Object, return nil if it does not exist </summary>
-    property JO[APath: string]: TJSONObject read GetJO write SetJO;
+    property JO[const APath: string]: TJSONObject read GetJO write SetJO;
     /// <summary> Object, auto create if it does not exist </summary>
-    property FO[APath: string]: TJSONObject read ForceObject;
+    property FO[const APath: string]: TJSONObject read ForceObject;
   public
+    /// <summary> Clear all data </summary>
     procedure Clear;
+    /// <summary> Parse JSONObject from string. The original data will be cleared </summary>
     procedure LoadFromString(const AData: string; UseBool: Boolean = False; RaiseExc: Boolean = False);
+    /// <summary> Parse JSONObject from a file. The original data will be cleared </summary>
     procedure LoadFromFile(const AFileName: string; UseBool: Boolean = False; RaiseExc: Boolean = False);
+    /// <summary> Save json string to a file </summary>
     procedure SaveToFile(const AFileName: string; Indentation: Integer = 4; AWriteBOM: Boolean = False; ATrailingLineBreak: Boolean = False);
+    /// <summary> Creating an instance from a string </summary>
     class function FromString(const AData: string; UseBool: Boolean = False; RaiseExc: Boolean = False): TJSONObject;
+    /// <summary> Creating an instance from a string </summary>
     class function FromFile(const AFileName: string; UseBool: Boolean = False; RaiseExc: Boolean = False): TJSONObject;
   end;
 
@@ -213,7 +231,6 @@ begin
   Result := self;
 end;
 
-{ string }
 function TAutoJSONValue.ToStr(const ADefault: string): string;
 begin
   if FJSONValue = nil then
@@ -235,7 +252,6 @@ begin
   Result := Value.ToStr('');
 end;
 
-{ Integer }
 function TAutoJSONValue.ToInt(ADefault: Integer): Integer;
 begin
   if FJSONValue = nil then
@@ -257,7 +273,6 @@ begin
   Result := Value.ToInt;
 end;
 
-{ Int64 }
 function TAutoJSONValue.ToInt64(ADefault: Int64): Int64;
 begin
   if FJSONValue = nil then
@@ -279,7 +294,6 @@ begin
   Result := Value.ToInt64;
 end;
 
-{ Float }
 function TAutoJSONValue.ToFloat(ADefault: Extended): Extended;
 begin
   if FJSONValue = nil then
@@ -301,7 +315,6 @@ begin
   Result := Value.ToFloat;
 end;
 
-{ Boolean }
 function TAutoJSONValue.ToBool(ADefault: Boolean): Boolean;
 begin
   if FJSONValue = nil then
@@ -323,7 +336,6 @@ begin
   Result := Value.ToBool;
 end;
 
-{ TJSONArray }
 function TAutoJSONValue.ToJA(AAutoCreate: Boolean): TJSONArray;
 begin
   Result := nil;
@@ -352,7 +364,6 @@ begin
   Result := Value.ToJA;
 end;
 
-{ TJSONObject }
 function TAutoJSONValue.ToJO(AAutoCreate: Boolean): TJSONObject;
 begin
   Result := nil;
@@ -491,77 +502,77 @@ begin
   SetValue(APath, AValue.FJSONValue);
 end;
 
-function TJSONObjectHelper.GetS(APath: string): string;
+function TJSONObjectHelper.GetS(const APath: string): string;
 begin
   Result := GetValue<string>(APath, '');
 end;
 
-procedure TJSONObjectHelper.SetS(APath: string; AValue: string);
+procedure TJSONObjectHelper.SetS(const APath: string; const AValue: string);
 begin
   SetValue(APath, TJSONString.Create(AValue));
 end;
 
-function TJSONObjectHelper.GetI(APath: string): Integer;
+function TJSONObjectHelper.GetI(const APath: string): Integer;
 begin
   Result := GetValue<Integer>(APath, 0);
 end;
 
-procedure TJSONObjectHelper.SetI(APath: string; AValue: Integer);
+procedure TJSONObjectHelper.SetI(const APath: string; AValue: Integer);
 begin
   SetValue(APath, TJSONNumber.Create(AValue));
 end;
 
-function TJSONObjectHelper.GetI64(APath: string): Int64;
+function TJSONObjectHelper.GetI64(const APath: string): Int64;
 begin
   Result := GetValue<Int64>(APath, 0);
 end;
 
-procedure TJSONObjectHelper.SetI64(APath: string; AValue: Int64);
+procedure TJSONObjectHelper.SetI64(const APath: string; AValue: Int64);
 begin
   SetValue(APath, TJSONNumber.Create(AValue));
 end;
 
-function TJSONObjectHelper.GetF(APath: string): Extended;
+function TJSONObjectHelper.GetF(const APath: string): Extended;
 begin
   Result := GetValue<Extended>(APath, 0.0);
 end;
 
-procedure TJSONObjectHelper.SetF(APath: string; AValue: Extended);
+procedure TJSONObjectHelper.SetF(const APath: string; AValue: Extended);
 begin
   SetValue(APath, TJSONNumber.Create(AValue));
 end;
 
-function TJSONObjectHelper.GetB(APath: string): Boolean;
+function TJSONObjectHelper.GetB(const APath: string): Boolean;
 begin
   Result := GetValue<Boolean>(APath, False);
 end;
 
-procedure TJSONObjectHelper.SetB(APath: string; AValue: Boolean);
+procedure TJSONObjectHelper.SetB(const APath: string; AValue: Boolean);
 begin
   SetValue(APath, TJSONBool.Create(AValue));
 end;
 
-function TJSONObjectHelper.GetJA(APath: string): TJSONArray;
+function TJSONObjectHelper.GetJA(const APath: string): TJSONArray;
 begin
   Result := GetValue<TJSONArray>(APath, nil);
 end;
 
-procedure TJSONObjectHelper.SetJA(APath: string; AValue: TJSONArray);
+procedure TJSONObjectHelper.SetJA(const APath: string; const AValue: TJSONArray);
 begin
   SetValue(APath, AValue);
 end;
 
-function TJSONObjectHelper.GetJO(APath: string): TJSONObject;
+function TJSONObjectHelper.GetJO(const APath: string): TJSONObject;
 begin
   Result := GetValue<TJSONObject>(APath, nil);
 end;
 
-procedure TJSONObjectHelper.SetJO(APath: string; AValue: TJSONObject);
+procedure TJSONObjectHelper.SetJO(const APath: string; const AValue: TJSONObject);
 begin
   SetValue(APath, AValue);
 end;
 
-function TJSONObjectHelper.ForceObject(APath: string): TJSONObject;
+function TJSONObjectHelper.ForceObject(const APath: string): TJSONObject;
 begin
   if not TryGetValue<TJSONObject>(APath, Result) then
   begin
@@ -570,7 +581,7 @@ begin
   end;
 end;
 
-function TJSONObjectHelper.ForceArray(APath: string): TJSONArray;
+function TJSONObjectHelper.ForceArray(const APath: string): TJSONArray;
 begin
   if not TryGetValue<TJSONArray>(APath, Result) then
   begin

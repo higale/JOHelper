@@ -1,21 +1,29 @@
-﻿# System.JSON.TJSONObject class helper
-- v1.0.10
-- 2024-08-19  by gale
+﻿# Delphi TJSONObject class helper
+- v1.0.11
+- 2024-08-27  by gale
 - https://github.com/higale/JOHelper
 
 ## Example:
     var
       jo: TJO; // or TJSONObject
-      f: Extended;
+      fTemp: Extended;
     begin
       jo := TJO.Create;
       try
         jo['title'] := 'hello world'; // or jo.S['title'] := 'hello world';
-        jo['a.arr[3].b'] := 0.3;      // or jo.F['a.arr[3].b'] := 0.3;
+        jo['a.b[3].c'] := 0.3;        // or jo.F['a.arr[3].b'] := 0.3;
         jo['good'] := False;          // or jo.B['good'] := False;
-        f := jo['a.arr[3].b'];        // or f := jo.F['a.arr[3].b'];
         Memo1.Text := jo.Format;
-        Memo1.Lines.Add(f.ToString)
+
+        fTemp := jo['a.b[3].c'];
+        Memo1.Lines.Add(fTemp.ToString);
+
+        fTemp := jo['a1'];
+        Memo1.Lines.Add(fTemp.ToString);
+
+        Memo1.Lines.Add(jo['a2'].ToFloat(-1).ToString);
+        Memo1.Lines.Add(jo['a3'].ToStr('a3 not exist'));
+        jo.SaveToFile('test.json');
       finally
         jo.free;
       end;
@@ -41,10 +49,20 @@
 - SaveToFile     - Save to file
 
 class Methods
-- class FromString - Create instance from string
-- class FromFile   - Create instance from file
+- FromString - Create instance from string
+- FromFile   - Create instance from file
 
-## Note:
-  The V[path] returns a data of type TJSONAuto. If it is empty and the ToJO(True) or ToJA(True) method is used,
-  the corresponding instance will be automatically created. At this time, it is equivalent to directly using FO[path] or FA[path]
+## TAutoJSONValue
+JO[path](or JO.V[path]) return a data of type TAutoJSONValue. Call the following method
+to change the default value returned when Fetch failure:
+- ToStr   - Convert to string, default is ''
+- ToInt   - Convert to integer, default is 0
+- ToInt64 - Convert to int64, default is 0
+- ToFloat - Convert to float(Extended), default is 0.0
+- ToBool  - Convert to boolean, default is false
+- ToJA    - Convert to TJSONArray, default is nil
+- ToJO    - Convert to TJSONObject, default is nil
 
+If it is empty and the ToJO(True) or ToJA(True) method is called, the corresponding
+instance will be automatically created. At this time, it is equivalent to directly
+using FO[path] or FA[path]
